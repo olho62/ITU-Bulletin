@@ -1,9 +1,12 @@
 {
-  "built": "2026-11-05T14:53+00:00",
+  "built": "2026-11-05T15:04+00:00",
   "edition": "afternoon",
   "ok": true,
-  "summaries": "model",
+  "summaries": "publisher",
   "warnings": [
-    "model unavailable \u2014 gemini-3.5-flash HTTP 429; gemini-flash-lite-latest HTTP 503"
+    "model unavailable \u2014 gemini-2.5-flash HTTP 404; gemini-2.5-flash-lite HTTP 404",
+    "model unavailable \u2014 gemini-2.5-flash HTTP 404; gemini-2.5-flash-lite HTTP 404",
+    "model unavailable \u2014 gemini-2.5-flash HTTP 404; gemini-2.5-flash-lite HTTP 404",
+    "model unavailable \u2014 gemini-2.5-flash HTTP 404; gemini-2.5-flash-lite HTTP 404"
   ]
 }
