@@ -113,8 +113,21 @@ def parse_feed(raw):
     return items
 
 
+# Read by people recovering from critical illness, and by staff mid-shift.
+# Applied to every item before anything else, so it holds even when Gemini is
+# unavailable. Whole words only ("war" must not catch "warn" or "Warwick").
+DISTRESSING = re.compile(
+    r"\b(kill|kills|killed|killing|killer|murder\w*|manslaughter|death|deaths|dead|died|dies|dying|"
+    r"fatal\w*|rape\w*|sexual\w*|assault\w*|abus\w*|stab|stabbed|stabbing\w*|shooting\w*|"
+    r"shot|bomb\w*|attack\w*|terror\w*|war|wars|massacre\w*|genocide|executed|execution\w*|"
+    r"assassinat\w*|suicide\w*|overdose\w*|court|courts|trial|jailed|sentenced|charged|guilty|"
+    r"inquest\w*|crash\w*|collision\w*|injured|injuries|disaster\w*|earthquake\w*|hostage\w*|"
+    r"missing)\b", re.I)
+
+
 def fetch_feeds(feeds, prefix):
     out = []
+    skipped = 0
     for n, feed in enumerate(feeds):
         raw = None
         for attempt in (1, 2):
@@ -134,13 +147,19 @@ def fetch_feeds(feeds, prefix):
             log(f"feed unreadable: {feed['name']} ({e})", warn=True)
             continue
         for i, it in enumerate(items[: feed["take"]]):
+            title, summary = clean(it["title"]), clean(it["summary"], words=40)
+            if DISTRESSING.search(title + " " + summary):
+                skipped += 1
+                continue
             out.append({
                 "id": f"{prefix}-{n}-{i}",
                 "source": feed["name"],
                 "url": it["link"].strip(),
-                "title": clean(it["title"]),
-                "summary": clean(it["summary"], words=40),
+                "title": title,
+                "summary": summary,
             })
+    if skipped:
+        log(f"{prefix}: left out {skipped} distressing item(s)")
     return out
 
 
@@ -183,11 +202,6 @@ def weather(lat, lon):
 
 # ----------------------------------------------------------- on this day ----
 
-GRIM = re.compile(r"\b(kill|killed|killing|dies|died|death|dead|massacre|murder|"
-                  r"bomb|bombing|attack|war|executed|execution|assassinat|"
-                  r"disaster|crash|earthquake|shooting|genocide|terror)", re.I)
-
-
 def on_this_day(day):
     d = get_json(f"https://en.wikipedia.org/api/rest_v1/feed/onthisday/selected/{day:%m}/{day:%d}")
     if not d or not d.get("selected"):
@@ -195,7 +209,7 @@ def on_this_day(day):
     best = None
     for e in d["selected"]:
         text = (e.get("text") or "").strip()
-        if not e.get("year") or not text or len(text) > 190 or GRIM.search(text):
+        if not e.get("year") or not text or len(text) > 190 or DISTRESSING.search(text):
             continue
         page = (e.get("pages") or [{}])[0]
         item = {
@@ -252,43 +266,50 @@ Return JSON only:
 """
 
 
-def model(prompt, model_name):
+def model(prompt, models):
+    """Ask Gemini. Tries each model in turn; busy servers (429/500/503) get
+    patient retries, a wrong model name (404) moves straight to the next one."""
     key = os.environ.get("GEMINI_API_KEY", "").strip()
     if not key:
         return None
     if DEADLINE[0] is None:
-        DEADLINE[0] = time.time() + 240
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent"
+        DEADLINE[0] = time.time() + 420
     body = json.dumps({
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {"temperature": 0.2, "responseMimeType": "application/json"},
     }).encode()
-    for attempt in (1, 2, 3):
-        if time.time() > DEADLINE[0]:
-            log("model: out of time, using publishers' wording", warn=True)
-            return None
-        try:
-            raw = http_get(url, {"Content-Type": "application/json", "x-goog-api-key": key},
-                           data=body, timeout=60)
-            outer = json.loads(raw)
-            data = json.loads(outer["candidates"][0]["content"]["parts"][0]["text"])
-            if data.get("stories"):
-                return data
-            log("model returned no stories", warn=True)
-            return None
-        except urllib.error.HTTPError as e:
-            if e.code in (429, 500, 503) and attempt < 3:
-                log(f"model busy (HTTP {e.code}), retrying")
-                time.sleep(5 * attempt)
-                continue
-            log(f"model HTTP {e.code}", warn=True)
-            return None
-        except Exception as e:  # noqa: BLE001
-            if attempt < 3:
-                time.sleep(3 * attempt)
-                continue
-            log(f"model error: {e}", warn=True)
-            return None
+    problems = []
+    for name in [m for m in models if m]:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{name}:generateContent"
+        for attempt, wait in enumerate((8, 16, 30, 0), start=1):
+            if time.time() > DEADLINE[0]:
+                log("model: out of time, using publishers' wording", warn=True)
+                return None
+            try:
+                raw = http_get(url, {"Content-Type": "application/json", "x-goog-api-key": key},
+                               data=body, timeout=60)
+                outer = json.loads(raw)
+                data = json.loads(outer["candidates"][0]["content"]["parts"][0]["text"])
+                if data.get("stories"):
+                    if problems:
+                        log(f"model: {name} answered after: {'; '.join(problems)}")
+                    return data
+                problems.append(f"{name} returned no stories")
+                break
+            except urllib.error.HTTPError as e:
+                if e.code in (429, 500, 503) and wait:
+                    log(f"{name} busy (HTTP {e.code}), retrying in {wait}s")
+                    time.sleep(wait)
+                    continue
+                problems.append(f"{name} HTTP {e.code}")
+                break
+            except Exception as e:  # noqa: BLE001 — timeouts, odd replies
+                if wait:
+                    time.sleep(wait)
+                    continue
+                problems.append(f"{name} error: {e}")
+                break
+    log("model unavailable — " + "; ".join(problems), warn=True)
     return None
 
 
@@ -338,10 +359,10 @@ def fallback(heads, n):
             "event_phrase": ""}
 
 
-def select(heads, date, edition, count, n, scope, model_name):
+def select(heads, date, edition, count, n, scope, models):
     if not heads:
         return {"stories": [], "event_phrase": ""}, False
-    got = model(ask(heads, date, edition, count, scope), model_name)
+    got = model(ask(heads, date, edition, count, scope), models)
     if got:
         checked = verify(got, heads)
         if checked["stories"]:
@@ -511,7 +532,7 @@ def pick_edition(cfg, now, forced):
 def build(cfg, edition, anchor):
     day = anchor.date()
     date_str = f"{day:%A} {day.day} {day:%B %Y}"
-    model_name = os.environ.get("GEMINI_MODEL") or cfg["model"]
+    models = [os.environ.get("GEMINI_MODEL") or cfg["model"], cfg.get("fallback_model")]
     log(f"building {edition} edition for {date_str}"
         + ("" if os.environ.get("GEMINI_API_KEY") else " (no Gemini key — publishers' wording)"))
 
@@ -519,7 +540,7 @@ def build(cfg, edition, anchor):
     if not shared_heads:
         log("ABORT — every national feed failed; leaving the last edition up", warn=True)
         return None
-    shared, used = select(shared_heads, date_str, edition, "FOUR", 4, "UK and world news", model_name)
+    shared, used = select(shared_heads, date_str, edition, "FOUR", 4, "UK and world news", models)
     used_model = used
 
     otd = on_this_day(day)
@@ -529,7 +550,7 @@ def build(cfg, edition, anchor):
         if not heads:
             log(f"no local headlines for {site['label']}", warn=True)
         local_sel, used = select(heads, date_str, edition, "THREE", 3,
-                                 f"local news for {site['label']}", model_name)
+                                 f"local news for {site['label']}", models)
         used_model = used_model or used
         wx = weather(site["lat"], site["lon"])
         sites[key] = {"meta": site, "local": local_sel["stories"], "wx": wx,

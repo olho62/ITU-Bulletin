@@ -8,6 +8,7 @@
   },
 
   "model": "gemini-3.5-flash",
+  "fallback_model": "gemini-flash-lite-latest",
 
   "sites": {
     "margate": {
@@ -16,8 +17,7 @@
       "lat": 51.389,
       "lon": 1.386,
       "feeds": [
-        { "url": "https://theisleofthanetnews.com/feed/", "name": "The Isle of Thanet News", "take": 12 },
-        { "url": "https://www.kentonline.co.uk/_api/rss/thanet_extra_news_feed.xml", "name": "Thanet Extra", "take": 10 }
+        { "url": "https://www.kentonline.co.uk/_api/rss/thanet_extra_news_feed.xml", "name": "Thanet Extra", "take": 20 }
       ]
     },
     "canterbury": {
