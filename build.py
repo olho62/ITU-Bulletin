@@ -465,23 +465,30 @@ def render(cfg, b, base):
 
 <header><h1>{esc(cfg["title"])}</h1><div class="stamp">{date_str} &nbsp;&middot;&nbsp;
 <b>{b["edition"]} edition, updated {b["built"]:%H:%M}</b> &nbsp;&middot;&nbsp;
-Writing after midnight? Date it tomorrow</div></header>
+Writing after midnight? Date it tomorrow &nbsp;<button id="tog" type="button">Switch to dark</button></div></header>
 
 <nav class="tabs">{tabs}</nav>
 {panels}
 <footer><span>Local news from {esc(", ".join(sources))}.
 National and world news from BBC News. Anniversaries from Wikipedia. Weather from Open-Meteo.
 Each story links to the original report. {summ}</span>
-<button id="tog">Switch to dark</button></footer>
+</footer>
 
 </div><script>
-const SUNSET="{sun["sunset"]}",SUNRISE="{sun["sunrise"]}",SITES={sites_js};let manual=null;
+const SUNSET="{sun["sunset"]}",SUNRISE="{sun["sunrise"]}",SITES={sites_js};
 const mins=s=>(+s.slice(0,2))*60+(+s.slice(3,5));
 const night=()=>{{const n=new Date(),m=n.getHours()*60+n.getMinutes();return m>=mins(SUNSET)||m<mins(SUNRISE);}};
+// A manual choice is remembered for 12 hours (it survives the half-hourly
+// reload), then the page goes back to following sunrise and sunset.
+const KEY="itu-theme";
+function saved(){{try{{const s=JSON.parse(localStorage.getItem(KEY)||"null");
+  return s&&Date.now()-s.t<12*3600e3?s.dark:null;}}catch(e){{return null;}}}}
+let manual=saved();
 function apply(){{const d=manual!==null?manual:night();
   document.documentElement.dataset.theme=d?"dark":"light";
   document.getElementById("tog").textContent=d?"Switch to light":"Switch to dark";}}
-document.getElementById("tog").onclick=()=>{{manual=document.documentElement.dataset.theme!=="dark";apply();}};
+document.getElementById("tog").onclick=()=>{{manual=document.documentElement.dataset.theme!=="dark";
+  try{{localStorage.setItem(KEY,JSON.stringify({{dark:manual,t:Date.now()}}));}}catch(e){{}}apply();}};
 apply();setInterval(apply,120000);
 function show(site){{
   document.querySelectorAll(".panel").forEach(p=>p.hidden=p.dataset.site!==site);
@@ -679,7 +686,7 @@ article p{margin:0;font-size:16px;line-height:1.5}
 .rail p a:hover{text-decoration:underline}
 footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-top:1px solid var(--line);
 margin-top:auto;padding-top:9px;font-size:13px;color:var(--mid)}
-#tog{font:inherit;font-size:13px;background:none;border:1px solid var(--line);color:var(--grey);padding:4px 11px;cursor:pointer}
+#tog{font:inherit;font-size:13px;background:none;border:1px solid var(--line);color:var(--grey);padding:3px 10px;cursor:pointer;margin-left:6px;white-space:nowrap}
 #tog:hover{border-color:var(--blue);color:var(--blue)}
 #tog:focus-visible{outline:3px solid var(--yellow);outline-offset:1px}
 @media(max-width:1200px){.grid{grid-template-columns:1fr 1fr;gap:20px}.rail{grid-column:1/-1}}
