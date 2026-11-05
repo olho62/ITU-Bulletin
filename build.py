@@ -226,6 +226,7 @@ def on_this_day(day):
 # ------------------------------------------------------------- the model ----
 
 DEADLINE = [None]  # whole-build time budget for model calls
+OUT_OF_QUOTA = set()  # models that said "limit reached" — skipped for the rest of the build
 
 
 def ask(heads, date, edition, count, scope):
@@ -279,7 +280,7 @@ def model(prompt, models):
         "generationConfig": {"temperature": 0.2, "responseMimeType": "application/json"},
     }).encode()
     problems = []
-    for name in [m for m in models if m]:
+    for name in [m for m in models if m and m not in OUT_OF_QUOTA]:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{name}:generateContent"
         for attempt, wait in enumerate((8, 16, 30, 0), start=1):
             if time.time() > DEADLINE[0]:
@@ -297,7 +298,12 @@ def model(prompt, models):
                 problems.append(f"{name} returned no stories")
                 break
             except urllib.error.HTTPError as e:
-                if e.code in (429, 500, 503) and wait:
+                if e.code == 429:
+                    # Limit reached. Retrying only burns more allowance.
+                    OUT_OF_QUOTA.add(name)
+                    problems.append(f"{name} limit reached (HTTP 429)")
+                    break
+                if e.code in (500, 503) and wait:
                     log(f"{name} busy (HTTP {e.code}), retrying in {wait}s")
                     time.sleep(wait)
                     continue
@@ -309,7 +315,7 @@ def model(prompt, models):
                     continue
                 problems.append(f"{name} error: {e}")
                 break
-    log("model unavailable — " + "; ".join(problems), warn=True)
+    log("model unavailable — " + ("; ".join(problems) or "all models over their limit"), warn=True)
     return None
 
 
