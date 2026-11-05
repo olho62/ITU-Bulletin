@@ -1,0 +1,83 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>Past editions — ITU Bulletin</title><style>
+:root{--blue:#005EB8;--dark-blue:#003087;--aqua:#00A499;--yellow:#FFB81C;
+--black:#231F20;--grey:#425563;--mid:#768692;--pale:#E8EDEE;--paper:#FFFFFF;
+--line:#D8DDE0;--faint:#F4F6F7}
+html[data-theme="dark"]{--blue:#41B6E6;--dark-blue:#0A1B33;--aqua:#00B3A8;--yellow:#FFB81C;
+--black:#EAF0F6;--grey:#A9BBD0;--mid:#7E93AE;--pale:#13284A;--paper:#0A1B33;
+--line:#1E3A63;--faint:#0E2240}
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--black);font-size:16px;line-height:1.45;
+font-family:"Frutiger W01",Arial,Helvetica,sans-serif;transition:background .5s,color .5s}
+.shell{max-width:1680px;margin:0 auto;padding:0 28px 18px;display:flex;flex-direction:column;min-height:100%}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:20px;
+border-bottom:4px solid var(--blue);padding:14px 0 10px;flex-wrap:wrap}
+h1{font-size:25px;font-weight:700;margin:0;color:var(--dark-blue)}
+html[data-theme="dark"] h1{color:var(--blue)}
+.stamp{font-size:14px;color:var(--grey);text-align:right;line-height:1.5}
+.stamp b{color:var(--blue);text-transform:capitalize}
+.tabs{display:flex;gap:2px;margin-top:12px;border-bottom:2px solid var(--line)}
+.tab{font:inherit;font-size:16px;font-weight:700;background:var(--faint);border:none;
+border-bottom:4px solid transparent;color:var(--grey);padding:10px 20px;cursor:pointer;margin-bottom:-2px}
+.tab em{font-style:normal;font-weight:400;font-size:13px;color:var(--mid);margin-left:5px}
+.tab:hover{color:var(--blue)}
+.tab.on{background:var(--paper);color:var(--dark-blue);border-bottom-color:var(--blue)}
+html[data-theme="dark"] .tab.on{color:var(--blue)}
+.tab:focus-visible{outline:3px solid var(--yellow);outline-offset:-3px}
+.panel[hidden]{display:none}
+.copy{background:var(--blue);color:#fff;padding:14px 20px;margin:14px 0 16px;
+display:flex;align-items:baseline;gap:20px;flex-wrap:wrap}
+html[data-theme="dark"] .copy{background:#005EB8}
+.copy .lab{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;opacity:.9;white-space:nowrap}
+.copy p{margin:0;font-size:25px;font-weight:600;line-height:1.35;flex:1;min-width:260px}
+.grid{display:grid;grid-template-columns:1.15fr 1.25fr .78fr;gap:26px;align-items:start}
+h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:var(--blue);
+margin:0 0 9px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+h2.gap{margin-top:16px}
+h2 a{color:inherit;text-decoration:none}
+h2 a:hover{border-bottom:1px solid var(--blue)}
+.today{background:var(--pale);border-left:5px solid var(--aqua);padding:13px 16px 15px;margin-bottom:12px}
+.today .d{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--aqua);margin:0 0 3px}
+.today h3{font-size:21px;font-weight:700;margin:0 0 8px}
+.today ul{margin:0;padding:0;list-style:none}
+.today li{font-size:17px;line-height:1.45;padding:4px 0 4px 16px;position:relative}
+.today li::before{content:"";position:absolute;left:0;top:13px;width:8px;height:2px;background:var(--aqua)}
+.chips{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.chip{background:var(--faint);border-left:3px solid var(--line);padding:7px 10px}
+.chip b{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--mid)}
+.chip span{display:block;font-size:14px;font-weight:600;color:var(--grey);line-height:1.3;margin-top:1px}
+.chip.any{grid-column:1/-1;border-left-color:var(--yellow)}
+.chip.any b{color:#8a6200}html[data-theme="dark"] .chip.any b{color:var(--yellow)}
+.chip.any em{display:block;font-style:normal;font-size:13px;color:var(--mid);margin-top:2px}
+.standing{font-size:14px;line-height:1.5;color:var(--grey);margin:11px 0 0;padding-top:9px;border-top:1px solid var(--line)}
+article{margin-bottom:13px}
+article h3{font-size:18px;font-weight:700;margin:0 0 2px;line-height:1.3;color:var(--dark-blue)}
+html[data-theme="dark"] article h3{color:var(--blue)}
+.bars{font-size:11px;letter-spacing:3px;color:var(--blue);margin:0 0 3px}
+article p{margin:0;font-size:16px;line-height:1.5}
+.none{color:var(--mid);font-size:15px;margin:0 0 12px}
+.src{margin-top:3px !important;font-size:12px !important}
+.src a{color:var(--mid);text-decoration:none;border-bottom:1px solid var(--line)}
+.src a:hover{color:var(--blue);border-color:var(--blue)}
+.rail>div{margin-bottom:13px}
+.rail h4{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--blue);margin:0 0 3px}
+.rail p{margin:0;font-size:15px;line-height:1.45}
+.rail p a{color:var(--blue);text-decoration:none;font-weight:600;white-space:nowrap}
+.rail p a:hover{text-decoration:underline}
+footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-top:1px solid var(--line);
+margin-top:auto;padding-top:9px;font-size:13px;color:var(--mid)}
+#tog{font:inherit;font-size:13px;background:none;border:1px solid var(--line);color:var(--grey);padding:4px 11px;cursor:pointer}
+#tog:hover{border-color:var(--blue);color:var(--blue)}
+#tog:focus-visible{outline:3px solid var(--yellow);outline-offset:1px}
+@media(max-width:1200px){.grid{grid-template-columns:1fr 1fr;gap:20px}.rail{grid-column:1/-1}}
+@media(max-width:820px){.shell{padding:0 16px 16px}.grid{grid-template-columns:1fr}.copy p{font-size:21px}
+h1{font-size:21px}.stamp{text-align:left}.tabs{flex-wrap:wrap}.tab{padding:9px 14px;font-size:15px}}
+@media(prefers-reduced-motion:reduce){body{transition:none}}
+
+.arclist{columns:3;column-gap:40px;margin:20px 0 0;padding:0;list-style:none;max-width:900px}
+.arclist li{padding:5px 0;font-size:16px;break-inside:avoid}
+.arclist a{color:var(--blue);text-decoration:none}.arclist a:hover{text-decoration:underline}
+@media(max-width:820px){.arclist{columns:1}}</style></head><body><div class="shell">
+<header><h1>Past editions</h1><div class="stamp"><a href="../" style="color:var(--blue)">&larr; Back to today</a></div></header>
+<ul class="arclist"><li><a href="2026-11-05.html">Thursday 5 November 2026</a></li></ul></div></body></html>
