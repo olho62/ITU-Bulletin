@@ -1,0 +1,89 @@
+{
+  "title": "ITU Bulletin",
+
+  "editions": {
+    "morning":   "06:00",
+    "afternoon": "13:00",
+    "night":     "23:30"
+  },
+
+  "model": "gemini-3.5-flash",
+
+  "sites": {
+    "margate": {
+      "label": "Margate",
+      "unit": "QEQM",
+      "lat": 51.389,
+      "lon": 1.386,
+      "feeds": [
+        { "url": "https://theisleofthanetnews.com/feed/", "name": "The Isle of Thanet News", "take": 12 },
+        { "url": "https://www.kentonline.co.uk/_api/rss/thanet_extra_news_feed.xml", "name": "Thanet Extra", "take": 10 }
+      ]
+    },
+    "canterbury": {
+      "label": "Canterbury",
+      "unit": "KCH",
+      "lat": 51.280,
+      "lon": 1.079,
+      "feeds": [
+        { "url": "https://www.kentonline.co.uk/_api/rss/kentish_gazette_news_feed.xml", "name": "Kentish Gazette", "take": 14 }
+      ]
+    },
+    "ashford": {
+      "label": "Ashford",
+      "unit": "William Harvey",
+      "lat": 51.148,
+      "lon": 0.875,
+      "feeds": [
+        { "url": "https://www.kentonline.co.uk/_api/rss/kentish_express_news_feed.xml", "name": "Kentish Express", "take": 14 }
+      ]
+    }
+  },
+
+  "shared_feeds": [
+    { "url": "https://feeds.bbci.co.uk/news/uk/rss.xml",           "name": "BBC News",  "take": 9 },
+    { "url": "https://feeds.bbci.co.uk/news/world/rss.xml",        "name": "BBC News",  "take": 9 },
+    { "url": "https://feeds.bbci.co.uk/news/england/kent/rss.xml", "name": "BBC News",  "take": 6 },
+    { "url": "https://feeds.bbci.co.uk/sport/football/rss.xml",    "name": "BBC Sport", "take": 6 }
+  ],
+
+  "prompts": {
+    "monday":    { "theme": "Visitors and voices", "questions": [
+      "Who came, and who sat with them?",
+      "What did they say to them, or talk about?",
+      "Did anyone phone, or send a photo?" ] },
+    "tuesday":   { "theme": "The night just gone", "questions": [
+      "Did they settle, or was it broken?",
+      "Any agitation, or things they seemed to see?",
+      "Was the unit loud or quiet? Who was with them?" ] },
+    "wednesday": { "theme": "Movement", "questions": [
+      "Physio today — passive, or did they help?",
+      "Turning, sitting out, eyes opening, a hand squeeze?",
+      "Anything today they could not do yesterday?" ] },
+    "thursday":  { "theme": "Mouth and thirst", "questions": [
+      "How long nil by mouth now?",
+      "Mouth care, sponges, lip balm — did it help?",
+      "Did they seem dry, or ask for a drink?" ] },
+    "friday":    { "theme": "The week behind", "questions": [
+      "What has changed since Monday?",
+      "Anything taken away — a line, a tube, sedation?",
+      "What would they want to know about this week?" ] },
+    "saturday":  { "theme": "Something of their own", "questions": [
+      "Music, radio, a programme on?",
+      "Photos or anything brought from home?",
+      "Something you learned about who they are." ] },
+    "sunday":    { "theme": "Where they are, and when", "questions": [
+      "What did it look like outside today?",
+      "Was the unit quieter?",
+      "Did they seem to know where they were?" ] }
+  },
+
+  "any_day": {
+    "theme": "How they made themselves understood",
+    "note": "Mouthing, writing, blinking, squeezing — and whether you got there."
+  },
+
+  "standing_note": "Write <strong>to</strong> them, not about them. Explain what was done and why, in plain words. Hard days go in too, without jargon, and say who was there.",
+
+  "archive_days": 365
+}
