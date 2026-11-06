@@ -1,0 +1,80 @@
+name: Build bulletin
+
+# GitHub's clock is UTC, and its timers often start late or are skipped
+# altogether. So each edition is scheduled at both its GMT and BST times, and
+# an hourly sweep catches anything GitHub missed. Every run builds the newest
+# edition that is due unless it is already up, so most runs simply stop after
+# a few seconds — that is expected, and costs nothing on a public repository.
+on:
+  schedule:
+    - cron: "52 4,5,11,12 * * *"   # morning 06:00, afternoon 13:00
+    - cron: "22 22,23 * * *"       # night 23:30
+    - cron: "17 * * * *"           # hourly sweep for anything missed
+  workflow_dispatch:                # the "Run workflow" button
+    inputs:
+      edition:
+        description: "Edition (auto = whichever is due now)"
+        type: choice
+        options: [auto, morning, afternoon, night]
+        default: auto
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: bulletin
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build the page
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          EDITION: ${{ inputs.edition }}
+        run: python build.py ${EDITION:+--edition "$EDITION"}
+
+      - name: Save it to the repository
+        id: save
+        run: |
+          git config user.name  "ITU Bulletin"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs
+          if git diff --cached --quiet; then
+            echo "Nothing new to publish."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "Bulletin $(TZ=Europe/London date '+%a %d %b %H:%M')"
+            # If someone edited the repository while this was building,
+            # pick up their change first, then save. Try up to three times.
+            for i in 1 2 3; do
+              git pull --rebase origin main && git push && break
+              sleep 5
+            done
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.save.outputs.changed == 'true'
+        uses: actions/configure-pages@v5
+
+      - if: steps.save.outputs.changed == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - if: steps.save.outputs.changed == 'true'
+        id: deploy
+        uses: actions/deploy-pages@v4

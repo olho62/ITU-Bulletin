@@ -534,12 +534,32 @@ def pick_edition(cfg, now, forced):
         if forced not in cfg["editions"]:
             sys.exit(f"Unknown edition '{forced}'. Choose from: {', '.join(cfg['editions'])}")
         return forced, now
+
+    # The newest edition that is due. Runs are scheduled a few minutes early, so an
+    # edition counts as due from 15 minutes before its time. A run that GitHub starts
+    # late — even hours late — still builds the edition it was meant to.
+    due = []
     for name, t in cfg["editions"].items():
         for day in (now.date(), now.date() - timedelta(days=1)):
-            delta = (now - anchor(t, day)).total_seconds() / 60
-            if -20 <= delta <= 45:
-                return name, anchor(t, day)
-    return None, None
+            a = anchor(t, day)
+            if a - timedelta(minutes=15) <= now:
+                due.append((a, name))
+    if not due:
+        return None, None
+    a, name = max(due)
+    return name, a
+
+
+def edition_key(edition, anchor):
+    return f"{anchor:%Y-%m-%d} {edition}"
+
+
+def already_built(key):
+    try:
+        s = json.loads((OUT / "status.json").read_text(encoding="utf-8"))
+        return s.get("ok") and s.get("key") == key
+    except (OSError, ValueError):
+        return False
 
 
 def build(cfg, edition, anchor):
@@ -581,14 +601,22 @@ def main():
 
     cfg = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
     now = datetime.now(LONDON)
-    edition, anchor = pick_edition(cfg, now, (args.edition or "").strip().lower() or None)
+    forced = (args.edition or "").strip().lower() or None
+    if forced == "auto":
+        forced = None
+    edition, anchor = pick_edition(cfg, now, forced)
     if not edition:
-        log(f"{now:%H:%M} UK time is not an edition time — nothing to do")
+        log("no edition due yet — nothing to do")
+        return 0
+    # A hand-picked edition (a test, say) must not stop the real one being built later.
+    key = "manual" if forced else edition_key(edition, anchor)
+    if not forced and already_built(key):
+        log(f"the {edition} edition for {anchor:%a %d %b} is already up — nothing to do")
         return 0
 
     b = build(cfg, edition, anchor)
     if not b:
-        write_status(edition, ok=False)
+        write_status(edition, key, ok=False)
         return 1
 
     (OUT / "archive").mkdir(parents=True, exist_ok=True)
@@ -602,17 +630,18 @@ def main():
         (OUT / "archive" / f"{old}.html").unlink()
     (OUT / "archive" / "index.html").write_text(archive_index(cfg, dates[:keep]), encoding="utf-8")
 
-    write_status(edition, ok=True, used_model=b["used_model"])
+    write_status(edition, key, ok=True, used_model=b["used_model"])
     log(f"done — {len(b['shared'])} national stories, {len(b['sites'])} sites, "
         f"{len(WARNINGS)} warning(s)")
     return 0
 
 
-def write_status(edition, ok, used_model=False):
+def write_status(edition, key, ok, used_model=False):
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "status.json").write_text(json.dumps({
         "built": datetime.now(LONDON).isoformat(timespec="minutes"),
-        "edition": edition, "ok": ok, "summaries": "model" if used_model else "publisher",
+        "edition": edition, "key": key, "ok": ok,
+        "summaries": "model" if used_model else "publisher",
         "warnings": WARNINGS,
     }, indent=2), encoding="utf-8")
 
