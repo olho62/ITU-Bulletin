@@ -562,8 +562,41 @@ def already_built(key):
         return False
 
 
+SEEN_FILE = "seen.json"   # in docs/: which stories appeared on which day
+SEEN_DAYS = 4
+
+
+def load_seen(day):
+    """{url: 'YYYY-MM-DD'} for stories shown recently, trimmed to the last few days."""
+    cutoff = (day - timedelta(days=SEEN_DAYS)).isoformat()
+    try:
+        seen = json.loads((OUT / SEEN_FILE).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        # First run with this feature: learn from the archived editions instead.
+        seen = {}
+        for page in sorted((OUT / "archive").glob("????-??-??.html")):
+            if page.stem >= cutoff:
+                for u in re.findall(r'class="src"><a href="([^"]+)"', page.read_text(encoding="utf-8")):
+                    seen.setdefault(html.unescape(u), page.stem)
+    return {u: d for u, d in seen.items() if d >= cutoff}
+
+
+def prefer_fresh(heads, seen, day, need, label):
+    """Stories shown on an EARLIER day go to the back of the queue. They are only
+    offered again if there are not enough new ones to fill the section. Stories
+    already shown today stay eligible, so one day's editions can share a big story."""
+    today = day.isoformat()
+    fresh = [h for h in heads if seen.get(h["url"], today) >= today]
+    stale = [h for h in heads if seen.get(h["url"], today) < today]
+    if stale:
+        log(f"{label}: {len(stale)} story(ies) already shown on an earlier day"
+            + ("" if len(fresh) >= need else f" — only {len(fresh)} new, so some may repeat"))
+    return fresh if len(fresh) >= need else fresh + stale
+
+
 def build(cfg, edition, anchor):
     day = anchor.date()
+    seen = load_seen(day)
     date_str = f"{day:%A} {day.day} {day:%B %Y}"
     models = [os.environ.get("GEMINI_MODEL") or cfg["model"], cfg.get("fallback_model")]
     log(f"building {edition} edition for {date_str}"
@@ -573,6 +606,7 @@ def build(cfg, edition, anchor):
     if not shared_heads:
         log("ABORT — every national feed failed; leaving the last edition up", warn=True)
         return None
+    shared_heads = prefer_fresh(shared_heads, seen, day, 4, "national")
     shared, used = select(shared_heads, date_str, edition, "FOUR", 4, "UK and world news", models)
     used_model = used
 
@@ -582,6 +616,7 @@ def build(cfg, edition, anchor):
         heads = fetch_feeds(site["feeds"], key)
         if not heads:
             log(f"no local headlines for {site['label']}", warn=True)
+        heads = prefer_fresh(heads, seen, day, 3, site["label"])
         local_sel, used = select(heads, date_str, edition, "THREE", 3,
                                  f"local news for {site['label']}", models)
         used_model = used_model or used
@@ -629,6 +664,12 @@ def main():
     for old in dates[keep:]:
         (OUT / "archive" / f"{old}.html").unlink()
     (OUT / "archive" / "index.html").write_text(archive_index(cfg, dates[:keep]), encoding="utf-8")
+
+    shown = [s["url"] for s in b["shared"]] + [x["url"] for s in b["sites"].values() for x in s["local"]]
+    seen = load_seen(b["day"])
+    for u in shown:
+        seen.setdefault(u, b["day"].isoformat())
+    (OUT / SEEN_FILE).write_text(json.dumps(seen, indent=0, sort_keys=True), encoding="utf-8")
 
     write_status(edition, key, ok=True, used_model=b["used_model"])
     log(f"done — {len(b['shared'])} national stories, {len(b['sites'])} sites, "
