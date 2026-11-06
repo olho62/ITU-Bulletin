@@ -17,7 +17,9 @@
       "lat": 51.389,
       "lon": 1.386,
       "feeds": [
-        { "url": "https://www.kentonline.co.uk/_api/rss/thanet_extra_news_feed.xml", "name": "Thanet Extra", "take": 20 }
+        { "url": "https://www.kentonline.co.uk/_api/rss/thanet_extra_news_feed.xml", "name": "Thanet Extra", "take": 20 },
+        { "url": "https://www.kentonline.co.uk/_api/rss/thanet_extra_sport_feed.xml", "name": "Thanet Extra", "take": 8 },
+        { "url": "https://www.kentonline.co.uk/_api/rss/east_kent_mercury_news_feed.xml", "name": "East Kent Mercury", "take": 10 }
       ]
     },
     "canterbury": {
