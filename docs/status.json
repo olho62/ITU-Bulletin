@@ -1,13 +1,8 @@
 {
-  "built": "2026-11-16T02:16+00:00",
-  "edition": "night",
-  "key": "2026-11-15 night",
+  "built": "2026-11-16T11:40+00:00",
+  "edition": "morning",
+  "key": "2026-11-16 morning",
   "ok": true,
   "summaries": "model",
-  "warnings": [
-    "unavailable: https://api.open-meteo.com/v1/forecast (<urlopen error _ssl.c:994: The handshake operation timed out>)",
-    "unavailable: https://api.open-meteo.com/v1/forecast (<urlopen error _ssl.c:994: The handshake operation timed out>)",
-    "ungrounded figure in 'Friends open restaurant in town centre unit' \u2014 used publisher's wording",
-    "unavailable: https://api.open-meteo.com/v1/forecast (<urlopen error _ssl.c:994: The handshake operation timed out>)"
-  ]
+  "warnings": []
 }
