@@ -1,8 +1,12 @@
 {
-  "built": "2026-11-25T08:48+00:00",
-  "edition": "morning",
-  "key": "2026-11-25 morning",
+  "built": "2026-11-25T15:08+00:00",
+  "edition": "afternoon",
+  "key": "2026-11-25 afternoon",
   "ok": true,
   "summaries": "model",
-  "warnings": []
+  "warnings": [
+    "model unavailable \u2014 gemini-flash-lite-latest HTTP 503; gemini-3.1-flash-lite HTTP 503",
+    "model unavailable \u2014 gemini-flash-lite-latest HTTP 503; gemini-3.1-flash-lite HTTP 503",
+    "model: out of time, using publishers' wording"
+  ]
 }
